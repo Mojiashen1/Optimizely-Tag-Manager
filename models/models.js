@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
-var findOrCreate = require('mongoose-findorcreate')
-var snippets = require('../snippets')
-var Handlebars = require('handlebars')
+var findOrCreate = require('mongoose-findorcreate');
+var snippets = require('../snippets');
+var Handlebars = require('handlebars');
 
 var projectSchema = mongoose.Schema({
   projectId: String,
@@ -10,13 +10,14 @@ var projectSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tag'
   }]
-})
+});
 
 var tagSchema = mongoose.Schema({
   name: String,
   tagDescription: String,
   fields: Array,
   trackingTrigger: String,
+  trackingTriggerType: String,
   custom: String,
   rank: Number,
   projectId: String,
@@ -26,49 +27,77 @@ var tagSchema = mongoose.Schema({
   pageName: String,
   eventName: String,
   template: String,
-  displayName: String
-})
+  displayName: String,
+  customId: String
+});
 
 //tags, masters, innerCallback
 tagSchema.methods.render = function(tags, masters) {
   //data structured {tags:, masters:, innerCallback:, template:}
   var filtered = [];
+  // console.log("[stage inside render this:]", this);
+  // console.log("[tags]", tags);
+  // console.log('[masters]', masters);
   if (tags) {
+    //filtered are the tags that this has as children ["*937249734", "GA"]
+    console.log("TAGS", tags)
      filtered = tags.filter(function(item) {
-      return this.callbacks.includes(item.name)
-    }.bind(this))
+       if (item.name === "custom") {
+         console.log("THIS.CALLBACKS", this.callbacks, "ITEM", item.customId)
+         return this.callbacks.includes(item.customId);
+       }
+       else {
+         console.log("THIS.CALLBACKS", this.callbacks, "ITEM", item.name)
+         return this.callbacks.includes(item.name);
+       }
+    }.bind(this));
+    console.log('FINAL FILTERED', filtered)
   }
-  console.log("THIS", this)
-  console.log("FILTERED", filtered)
+  // console.log('[filtered]', filtered);
   var innerCallback = '';
   for (var i = 0; i < filtered.length; i++) {
     innerCallback += filtered[i].render(tags, masters);
   }
-  console.log("INNERCALLBACK", innerCallback)
-  innerCallback="function callback" + Math.floor(Math.random()*1000) + " (){"+innerCallback+"}"
-  console.log("INNERCALLBACK2", innerCallback)
-  console.log("MASTERS", masters)
-  console.log("THIS.NAME", this.name, typeof this.name)
+  // console.log('innerCallback1', innerCallback);
+  var index = Math.floor(Math.random()*1000);
+  innerCallback="function callback" + index + " (){"+innerCallback+"}";
+  // console.log('innerCallback2', innerCallback);
+
   var master = masters.filter(function(item) {
-    return this.name === item.name
-  }.bind(this))[0]
-  console.log("MASTER", master)
+    return this.name === item.name;
+  }.bind(this))[0];
+  // console.log('myMaster', master);
+
   var handleBarsFields = {};
 
   for (var i = 0; i < this.fields.length; i++) {
     handleBarsFields[this.fields[i].name] = this.fields[i].value;
   }
 
-  handleBarsFields['callback'] = innerCallback;
-
-  console.log("HANDLEBARSFIELDS", handleBarsFields)
-  if (this.name === 'custom') {
-    var template = Handlebars.compile(this.template);
-  } else {
-    var template = Handlebars.compile(master.template);
+  // console.log('[handlebarsFields]',handleBarsFields);
+  var template;
+  if (this.name === 'GA') {
+    // console.log('[stage got inside GA tag]');
+    innerCallback += 'callback' + index + '();';
+    // console.log('[innerCallback after GA insertion]', innerCallback);
+    template = Handlebars.compile(master.template);
   }
-  return template(handleBarsFields);
-}
+
+  handleBarsFields.callback = innerCallback;
+  // console.log('[handleBarsFields after callback addition]', handleBarsFields);
+
+  console.log("handleBarsFields", handleBarsFields)
+  if (this.name === 'custom') {
+    console.log('custom', this.name, this.template)
+    template = Handlebars.compile(this.template);
+  } else {
+    template = Handlebars.compile(master.template);
+  }
+  var x = template(handleBarsFields);
+  console.log("template(handleBarsFields);", x);
+  return x;
+};
+
 
 var masterSchema = mongoose.Schema({
   name: String,
@@ -80,7 +109,7 @@ var masterSchema = mongoose.Schema({
   callbackCode: String,
   template: String,
   usesOurCallback: Boolean
-})
+});
 
 
 projectSchema.plugin(findOrCreate);
@@ -88,4 +117,4 @@ module.exports = {
   'Project': mongoose.model('Project', projectSchema),
   'Tag': mongoose.model('Tag', tagSchema),
   'Master': mongoose.model('Master', masterSchema)
-  }
+};

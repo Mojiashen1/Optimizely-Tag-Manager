@@ -68,7 +68,7 @@ var MyTagsPage = React.createClass({
 
     // loops through all tags (downloadedProject) and master templates
     // combines objects based off of matching name fields in order
-    // to fully display information correctly 
+    // to fully display information correctly
 
     var currentInfo = this.state.sidePanel;
     var currentIndex = this.state.sidePanelIndex;
@@ -92,13 +92,13 @@ var MyTagsPage = React.createClass({
         <MyTableContent splicedArray={splicedArray} onSelect={this.onSelect} {...this.props} />
         {/*passes updated tag information, deleted tag information, and all other info
          to be displayed correctly in sidepanel after various button presses*/}
-        <MySidePanel 
-          info={currentInfo} 
-          index={currentIndex} 
-          downloaded={this.state.downloadedProject} 
-          splicedArray={splicedArray} 
-          deleted={this.state.sidePanelDeleted} 
-          onDelete={this.onDelete} 
+        <MySidePanel
+          info={currentInfo}
+          index={currentIndex}
+          downloaded={this.state.downloadedProject}
+          splicedArray={splicedArray}
+          deleted={this.state.sidePanelDeleted}
+          onDelete={this.onDelete}
           {...this.props}
         />
       </div>
